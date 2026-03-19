@@ -1,7 +1,7 @@
 
-   语音转文字 + 说话人分离 —— 私有化离线部署方案（详细操作指南）
+# 语音转文字 + 说话人分离 —— 私有化离线部署方案（详细操作指南）
 
-   AutoDL 服务器快速部署（RTX 4090 / PyTorch 2.8.0 / Python 3.12 / CUDA 12.8）
+# AutoDL 服务器快速部署（RTX 4090 / PyTorch 2.8.0 / Python 3.12 / CUDA 12.8）
 
 【环境说明】
   镜像：PyTorch 2.8.0 / Python 3.12 / Ubuntu 22.04 / CUDA 12.8
