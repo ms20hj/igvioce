@@ -118,20 +118,24 @@ for res in result:
         current_spk = None
         current_text = ''
         current_start = 0
+        current_end = 0
         for sent in sentences:
             spk = sent.get('spk', 0)
             text = sent.get('text', '')
             start = sent.get('start', 0)
+            end = sent.get('end', 0)
             if spk != current_spk:
                 if current_text:
-                    print(f'[{ms_to_time(current_start)}] 用户{current_spk + 1}： {current_text}')
+                    print(f'[{ms_to_time(current_start)}]-[{ms_to_time(current_end)}] 用户{current_spk + 1}： {current_text}')
                 current_spk = spk
                 current_text = text
                 current_start = start
+                current_end = end
             else:
                 current_text += text
+                current_end = end
         if current_text:
-            print(f'[{ms_to_time(current_start)}] 用户{current_spk + 1}： {current_text}')
+            print(f'[{ms_to_time(current_start)}]-[{ms_to_time(current_end)}] 用户{current_spk + 1}： {current_text}')
     else:
         print('识别结果：', res.get('text', ''))
 "
