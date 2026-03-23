@@ -1,4 +1,5 @@
 import os
+import re
 import uuid
 import asyncio
 import tempfile
@@ -97,3 +98,64 @@ async def asr_stream(file: UploadFile = File(...), hotword: str = ''):
             'X-Accel-Buffering': 'no',
         },
     )
+
+
+@app.post('/asr')
+async def asr(file: UploadFile = File(...), hotword: str = ''):
+    """
+    上传音频文件，返回识别结果对象列表。
+
+    支持格式：mp3 / wav / m4a / flac / ogg / aac，最大 500MB。
+
+    参数：
+        - file: 音频文件
+        - hotword: 热词（可选），用空格分隔多个词，如 "阿里巴巴 达摩院 人工智能"
+
+    响应格式（application/json）：
+        [
+            {"start": "00:16", "end": "00:21", "speaker": "用户1", "text": "你好，欢迎使用语音识别服务。"},
+            {"start": "00:22", "end": "00:25", "speaker": "用户2", "text": "谢谢，很高兴使用。"}
+        ]
+    """
+    if model is None:
+        raise HTTPException(status_code=503, detail='模型尚未加载完成，请稍后重试')
+
+    ext = os.path.splitext(file.filename or '')[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f'不支持的文件格式：{ext}，支持格式：{", ".join(sorted(ALLOWED_EXTENSIONS))}',
+        )
+
+    content = await file.read()
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail='文件大小超过 500MB 限制')
+
+    tmp_path = os.path.join(tempfile.gettempdir(), f'{uuid.uuid4()}{ext}')
+    try:
+        with open(tmp_path, 'wb') as f:
+            f.write(content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'文件保存失败：{str(e)}')
+
+    try:
+        loop = asyncio.get_event_loop()
+
+        def run_inference():
+            return list(recognize_stream(model, tmp_path, hotword=hotword))
+
+        sentences = await loop.run_in_executor(None, run_inference)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'推理失败：{str(e)}')
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+    def parse_sentence(s: str) -> dict:
+        """将 '[mm:ss]-[mm:ss] 用户X： text' 解析为字典。"""
+        m = re.match(r'\[([^\]]+)\]-\[([^\]]+)\]\s+(.+?)：\s*(.*)', s)
+        if m:
+            return {'start': m.group(1), 'end': m.group(2), 'speaker': m.group(3), 'text': m.group(4)}
+        return {'start': '', 'end': '', 'speaker': '', 'text': s}
+
+    return [parse_sentence(s) for s in sentences]

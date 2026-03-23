@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  asr:
+    build: .
+    image: kimi-asr-service:latest
+    container_name: kimi-asr-service
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    ports:
+      - '8000:8000'
+    volumes:
+      - /root/autodl-tmp/models:/root/autodl-tmp/models:ro
+      - /tmp:/tmp
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - KIMI_AUDIO_MODEL_PATH=/root/autodl-tmp/models/moonshotai/Kimi-Audio-7B-Instruct
+      - HF_TOKEN=${HF_TOKEN:-}
+    shm_size: '4gb'
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: kimi-asr-nginx
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - asr

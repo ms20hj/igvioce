@@ -28,7 +28,7 @@ pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple
 pip install -U funasr -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 3. 安装音频处理依赖（torchaudio 必须与 torch 版本严格匹配）  
-pip install torchaudio==2.8.0 soundfile librosa -i https://pypi.tuna.tsinghua.edu.cn/
+pip install torchaudio==2.8.0 soundfile librosa -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 4. 安装 modelscope（用于下载模型）  
 pip install modelscope -i https://pypi.tuna.tsinghua.edu.cn/simple
