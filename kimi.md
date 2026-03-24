@@ -75,6 +75,72 @@ cd /tmp/Kimi-Audio && git submodule update --init --recursive
 pip install -e /tmp/Kimi-Audio/kimia_infer/
 ```
 
+**方案D：服务器无法访问 GitHub，通过本地下载 ZIP 后上传到服务器离线安装**
+
+> **背景**：Kimi-Audio 仓库中 `kimia_infer/` 是一个 git submodule，下载 ZIP 包时 submodule 内容不会被包含，
+> 导致 `kimia_infer/` 目录为空（没有 `setup.py` / `pyproject.toml`），无法 pip install。
+> 同时 `kimia_infer/models/tokenizer/glm4` 也是一个 submodule，指向 `THUDM/glm-4-voice-tokenizer`。
+> 解决方法：在本地分别下载主仓库和所有 submodule 的 ZIP，上传到服务器后手动组装目录结构。
+
+**在本地电脑上操作（可访问 GitHub）：**
+
+需要下载以下两个 ZIP 包：
+1. Kimi-Audio 主仓库：https://github.com/MoonshotAI/Kimi-Audio/archive/refs/heads/master.zip
+2. GLM-4 语音 tokenizer（submodule）：https://huggingface.co/THUDM/glm-4-voice-tokenizer/resolve/main/speech_tokenizer/speech_tokenizer.onnx
+   或整个 tokenizer 仓库 ZIP：https://github.com/THUDM/glm-4-voice-tokenizer/archive/refs/heads/main.zip
+   （注意：如果该仓库不存在独立 ZIP，可通过 `git clone https://github.com/THUDM/glm-4-voice-tokenizer` 后打包上传）
+
+实际操作步骤（推荐用 git clone 在本地完整获取后打包上传）：
+
+```bash
+# === 在本地电脑执行（可访问 GitHub）===
+
+# 1. 完整 clone（含 submodule）
+git clone https://github.com/MoonshotAI/Kimi-Audio.git /tmp/Kimi-Audio-full
+cd /tmp/Kimi-Audio-full
+git submodule update --init --recursive
+
+# 2. 打包为 tar.gz（包含所有 submodule 内容）
+cd /tmp
+tar czf Kimi-Audio-full.tar.gz Kimi-Audio-full/
+
+# 3. 上传到服务器（替换为你的服务器地址）
+scp Kimi-Audio-full.tar.gz root@<服务器IP>:/tmp/
+```
+
+**在服务器上操作：**
+
+```bash
+# === 在服务器上执行 ===
+
+# 1. 解压
+cd /tmp
+tar xzf Kimi-Audio-full.tar.gz
+mv Kimi-Audio-full Kimi-Audio
+
+# 2. 验证 submodule 内容已存在
+ls /tmp/Kimi-Audio/kimia_infer/
+# 应能看到 __init__.py, api/, models/ 等文件
+
+ls /tmp/Kimi-Audio/kimia_infer/models/tokenizer/glm4/
+# 应能看到 speech_tokenizer/ 等文件
+
+# 3. 安装依赖（flash_attn 需要特殊处理，先跳过）
+grep -v "flash_attn" /tmp/Kimi-Audio/requirements.txt > /tmp/requirements_no_flash.txt
+pip install -r /tmp/requirements_no_flash.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 4. 单独安装 flash_attn（--no-build-isolation 让编译时能找到已装的 torch）
+#    编译需要 5~15 分钟，请耐心等待
+pip install flash_attn==2.7.4.post1 --no-build-isolation -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+todo
+# 5. 安装 kimia_infer
+pip install -e /tmp/Kimi-Audio/kimia_infer/
+
+# 5. 验证安装成功
+python -c "from kimia_infer.api.kimia import KimiAudio; print('kimia_infer OK')"
+```
+
 ---
 
 ## 步骤3：下载 Kimi-Audio 模型权重

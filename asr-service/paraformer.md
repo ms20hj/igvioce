@@ -127,9 +127,10 @@ curl -N -X POST http://localhost:6006/asr/stream \
      -F "file=@/path/to/audio.mp3" \
      -F "hotword=阿里巴巴 达摩院 人工智能"
 
-# 非流式返回（JSON 列表）
+# 非流式返回（JSON 列表），输出请求耗时
 curl -X POST http://localhost:6006/asr \
-     -F "file=@/root/autodl-tmp/audio/3.mp3"
+     -F "file=@/root/autodl-tmp/audio/3.mp3" \
+     -w '\n请求开始: %{time_starttransfer}s | 总耗时: %{time_total}s\n'
 ```
 
 ### Python 调用
@@ -141,7 +142,7 @@ import requests
 
 with open('/path/to/audio.mp3', 'rb') as f:
     response = requests.post(
-        'http://localhost:6000/asr/stream',
+        'http://localhost:6006/asr/stream',
         files={'file': ('audio.mp3', f, 'audio/mpeg')},
         data={'hotword': '阿里巴巴 达摩院'},
         stream=True,
@@ -164,7 +165,7 @@ import requests
 
 with open('/path/to/audio.mp3', 'rb') as f:
     response = requests.post(
-        'http://localhost:6000/asr',
+        'http://localhost:6006/asr',
         files={'file': ('audio.mp3', f, 'audio/mpeg')},
         data={'hotword': '阿里巴巴 达摩院'},
     )

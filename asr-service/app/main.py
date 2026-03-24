@@ -12,7 +12,10 @@ from app.asr_engine import load_model, recognize_stream
 
 model = None
 
-ALLOWED_EXTENSIONS = {'.mp3', '.wav', '.m4a', '.flac', '.ogg', '.aac'}
+ALLOWED_EXTENSIONS = {
+    '.mp3', '.wav', '.m4a', '.flac', '.ogg', '.aac',
+    '.mp4', '.avi', '.mov', '.mkv', '.wmv', '.flv', '.webm', '.mpeg', '.mpg', '.3gp'
+}
 MAX_FILE_SIZE = 500 * 1024 * 1024  # 500MB
 
 
@@ -37,12 +40,15 @@ async def health():
 @app.post('/asr/stream')
 async def asr_stream(file: UploadFile = File(...), hotword: str = ''):
     """
-    上传音频文件，以 SSE 流式返回逐句识别结果（含说话人分离）。
+    上传音频/视频文件，以 SSE 流式返回逐句识别结果（含说话人分离）。
 
-    支持格式：mp3 / wav / m4a / flac / ogg / aac，最大 500MB。
+    支持格式：
+    - 音频：mp3 / wav / m4a / flac / ogg / aac
+    - 视频：mp4 / avi / mov / mkv / wmv / flv / webm / mpeg / mpg / 3gp
+    最大文件大小：500MB。
 
     参数：
-        - file: 音频文件
+        - file: 音频/视频文件
         - hotword: 热词（可选），用空格分隔多个词，如 "阿里巴巴 达摩院 人工智能"
 
     响应格式（text/event-stream）：
@@ -103,12 +109,15 @@ async def asr_stream(file: UploadFile = File(...), hotword: str = ''):
 @app.post('/asr')
 async def asr(file: UploadFile = File(...), hotword: str = ''):
     """
-    上传音频文件，返回识别结果对象列表。
+    上传音频/视频文件，返回识别结果对象列表。
 
-    支持格式：mp3 / wav / m4a / flac / ogg / aac，最大 500MB。
+    支持格式：
+    - 音频：mp3 / wav / m4a / flac / ogg / aac
+    - 视频：mp4 / avi / mov / mkv / wmv / flv / webm / mpeg / mpg / 3gp
+    最大文件大小：500MB。
 
     参数：
-        - file: 音频文件
+        - file: 音频/视频文件
         - hotword: 热词（可选），用空格分隔多个词，如 "阿里巴巴 达摩院 人工智能"
 
     响应格式（application/json）：
